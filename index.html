@@ -5,6 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    
+    <div class="container">
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Left Weight</div>
+                <div class="stat-value" id="leftWeight">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Next Weight</div>
+                <div class="stat-value" id="nextWeight">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Right Weight</div>
+                <div class="stat-value" id="rightWeight">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Tilt Angle</div>
+                <div class="stat-value" id="angle">-</div>
+            </div>
+        </div>
+
+        <div class="seesaw-container" id="seesawContainer">
+            <div class="ground"></div>
+            <div class="pivot"></div>
+            <div class="seesaw-plank" id="seesawPlank" style="transform: translateX(-50%) translateY(-50%) rotate(0deg);"></div>
+            <div class="seesaw-clickable" id="seesawClickable"></div>
+        </div>
+
+        <div class="controls">
+            <button id="resetBtn">🔄 Reset Seesaw</button>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
 </body>
 </html>

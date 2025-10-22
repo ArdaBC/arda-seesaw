@@ -1,61 +1,88 @@
-class Ball {
+let torque = 0;
+let rightTorque = 0;
+let leftTorque = 0;
+let oldAngle = 0;
 
-    constructor(weight, distance){
-        this.weight = weight;
-        this.distance = distance;
-    }
-
-    asVector(){
-        return this.weight * this.distance;
-    }
-
-}
-
-const leftBalls = []
-const rightBalls = []
-
-/**
- * Calculates the torque for the given arrangement.
- * @param {Ball[]} weights - Array of weights
- * @returns {number} The sum
- */
-function calculateTorque(weights){
-    return weights.reduce((sum, w) => sum + w.asVector(), 0);
-}
-
-/**
- * Returns a random int from the included min-max range
- * @param {number} min - lower bound (included)
- * @param {number} max - upper bound (included)
- * @returns {number} The random int
- */
 function randomInt(min, max) {
-return Math.floor(Math.random() * (max - min + 1) + min);
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-document.getElementsByClassName('seesaw-left')[0]
-.addEventListener('click', function (event) {
+function weightAnimation(weight, x, y){
+
+    const container = document.getElementById("seesawClickable");
+
+    const ball = document.createElement("div");
+    ball.className = "object";
+    ball.style.width = "34px"; //depends on weight
+    ball.style.height = "34px"; //depends on weight
+    ball.style.background = "rgb(230, 126, 34)";
+    ball.style.position = "absolute";
+    ball.style.left = `${x}px`;
+    ball.style.top = "0px";
+    ball.textContent = `${weight}kg`;
+
+    container.append(ball);
+
+    function animate() {
+        let top = parseFloat(ball.style.top);
+        if (top < y) {
+            ball.style.top = top + 2 + "px";
+            requestAnimationFrame(animate);
+        }
+    }
+
+    requestAnimationFrame(animate);
+
+}
+
+function plankAnimation(){
+
+    const angle = Math.max(-30, Math.min(30, (rightTorque - leftTorque) / 10));
+
+    function animate() {
     
-    const rndInt = randomInt(1, 10);
-    console.log("Left: ", rndInt);
+        if(oldAngle > angle){
+            oldAngle -= (oldAngle - angle)/60;
+        }
+        else{
+            oldAngle += (angle - oldAngle)/60;
+        }
 
-    leftBalls.push(new Ball(rndInt, -1));
+        document.getElementById("seesawPlank").style.transform = `translateX(-50%) translateY(-50%) rotate(${oldAngle}deg)`;
 
-    getTorque();
-});
+        if(Math.abs(oldAngle - angle) < 0.1){
+            return;
+        }
 
-document.getElementsByClassName('seesaw-right')[0]
+        requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+
+}
+
+document.getElementsByClassName('seesaw-clickable')[0]
 .addEventListener('click', function (event) {
 
-    const rndInt = randomInt(1, 10);
-    console.log("Righte: ", rndInt);
+    const rect = this.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
-    rightBalls.push(new Ball(rndInt, 1));
+    const randWeight = randomInt(1, 10);
 
-    getTorque();
+    const distance = x-225;
+
+    //console.log("Clicked at:", x, y); //225 tam orta
+
+    const currentTorque = randWeight * distance;
+
+    currentTorque > 0 ? rightTorque += currentTorque : leftTorque -= currentTorque;
+    
+    torque += currentTorque;
+
+    weightAnimation(randWeight, x, y);
+
+    plankAnimation();
+
+    console.log("Torque:", torque)
 });
-
-function getTorque() {
-    const torque = calculateTorque(leftBalls) + calculateTorque(rightBalls);
-    console.log("Torque:", torque);
-}

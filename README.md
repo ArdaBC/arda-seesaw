@@ -15,3 +15,7 @@ Sometimes, adding countertorque makes the seesaw move slightly in the other dire
 Seesaw moves before the weight touches the plank
 
 Sometimes, if the seesaw moves too fast, the collison logic on still balls fail and they hang on the air
+
+After 20 balls, it gets really laggy
+
+Sometimes, balls fall off to the side

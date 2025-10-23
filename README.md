@@ -14,4 +14,4 @@ Sometimes, adding countertorque makes the seesaw move slightly in the other dire
 
 Seesaw moves before the weight touches the plank
 
-Weights don't stop right on the plank
+Sometimes, if the seesaw moves too fast, the collison logic on still balls fail and they hang on the air

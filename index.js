@@ -7,6 +7,17 @@ let nextWeight = 0;
 let oldAngle = 0;
 let angle = 0;
 
+const colors = [
+  "rgb(230, 126, 34)",
+  "rgb(155, 89, 182)",
+  "rgb(231, 76, 60)",
+  "rgb(46, 204, 113)",
+  "rgb(52, 73, 94)",
+  "rgb(26, 188, 156)",
+  "rgb(243, 156, 18)",
+  "rgb(52, 152, 219)"
+];
+
 document.addEventListener("DOMContentLoaded", () => {
     nextWeight = randomInt(1, 10);
     document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
@@ -55,15 +66,19 @@ function placeBallOnPlank(ball) {
 }
 
 function weightAnimation(weight, x, y){
+
+    const size = 30 + 4 * weight;
+    const color = colors[Math.floor(Math.random() * colors.length)]
+
     const container = document.getElementById("seesawClickable");
 
     const ball = document.createElement("div");
     ball.className = "object";
-    ball.style.width = "34px"; //depends on weight
-    ball.style.height = "34px"; //depends on weight
-    ball.style.background = "rgb(230, 126, 34)"; //rastgele yap
+    ball.style.width = `${size}px`; 
+    ball.style.height = `${size}px`; 
+    ball.style.background = `${color}`;
     ball.style.position = "absolute";
-    ball.style.left = `${x - 17}px`; //bunu da ayarla 34/2 = 17
+    ball.style.left = `${x - size/2}px`;
     ball.style.top = "0px";
     ball.textContent = `${weight}kg`;
 
@@ -168,19 +183,33 @@ document.getElementsByClassName('seesaw-clickable')[0]
 
     const currentTorque = randWeight * distance;
 
+    let side = "";
+
     if(currentTorque > 0){
 
         rightWeight += randWeight;
         document.getElementById("rightWeight").innerHTML = `${rightWeight} kg`;
         rightTorque += currentTorque;
+        side = "right";
     }
     else{
 
         leftWeight += randWeight;
         document.getElementById("leftWeight").innerHTML = `${leftWeight} kg`;
         leftTorque -= currentTorque;
+        side = "left";
 
     }
+
+    let finalDist = Math.round(Math.abs(distance));
+    
+    const logger = document.getElementById("log");
+
+    const log = document.createElement("div");
+    log.className = "log-entry";
+    log.innerHTML = `📦 ${randWeight} kg dropped on ${side} side at ${finalDist} px from center`;
+
+    logger.append(log);
 
     torque += currentTorque;
 
@@ -194,10 +223,16 @@ document.getElementsByClassName('seesaw-clickable')[0]
 
 document.getElementById('resetBtn').addEventListener('click', () => {
 
-    var parent = document.getElementById('seesawClickable');
+    const parent = document.getElementById('seesawClickable');
 
     while(parent.firstChild){
         parent.removeChild(parent.firstChild);
+    }
+
+    const logger = document.getElementById("log");
+
+    while(logger.firstChild){
+        logger.removeChild(logger.firstChild);
     }
 
     torque = 0;

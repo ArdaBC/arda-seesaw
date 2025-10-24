@@ -10,6 +10,27 @@ let state = {
     currentId: 0
 };
 
+let placedSound = new Sound("land.ogg");
+let resetSound = new Sound("reset.ogg");
+
+function Sound(src) {
+
+  this.sound = document.createElement("audio");
+  this.sound.src = src;
+  this.sound.setAttribute("preload", "auto");
+  this.sound.setAttribute("controls", "none");
+  this.sound.style.display = "none";
+  this.sound.volume = 0.5
+
+  document.body.appendChild(this.sound);
+
+  this.play = function(){
+    const clone = this.sound.cloneNode();
+    clone.play();
+  }
+
+}
+
 //çok kullanılıyor diye global yaptım
 const container = document.getElementById("seesawClickable"); 
 
@@ -86,10 +107,10 @@ function placeBallOnPlank(ball) {
 }
 
 function updateDisplay() {
-    document.getElementById("rightWeight").innerHTML = `${state.rightWeight} kg`;
-    document.getElementById("leftWeight").innerHTML = `${state.leftWeight} kg`;
-    document.getElementById("nextWeight").innerHTML = `${state.nextWeight} kg`;
-    document.getElementById("angle").innerHTML = `${state.oldAngle.toFixed(1)}°`;
+    document.getElementById("rightWeight").textContent = `${state.rightWeight.toFixed(1)} kg`;
+    document.getElementById("leftWeight").textContent = `${state.leftWeight.toFixed(1)} kg`;
+    document.getElementById("nextWeight").textContent = `${state.nextWeight} kg`;
+    document.getElementById("angle").textContent = `${state.oldAngle.toFixed(1)}°`;
 }
 
 function createWeight(weight, x) {
@@ -173,7 +194,7 @@ document.getElementById('seesawClickable')
 
     const log = document.createElement("div");
     log.className = "log-entry";
-    log.innerHTML = `📦 ${randWeight} kg dropped on ${side} side at ${finalDist} px from center`;
+    log.textContent = `📦 ${randWeight} kg dropped on ${side} side at ${finalDist} px from center`;
 
     updateDisplay();
 
@@ -191,15 +212,10 @@ document.getElementById('seesawClickable')
 
 document.getElementById('resetBtn').addEventListener('click', () => {
 
-    while(container.firstChild){
-        container.removeChild(container.firstChild);
-    }
+    container.replaceChildren();
 
     const logger = document.getElementById("log");
-
-    while(logger.firstChild){
-        logger.removeChild(logger.firstChild);
-    }
+    logger.replaceChildren();
 
     state = {
         torque: 0,
@@ -213,13 +229,14 @@ document.getElementById('resetBtn').addEventListener('click', () => {
         nextWeight: randomInt(1, 10)
     };
 
-    localStorage.clear();
+    localStorage.removeItem("state");
+    localStorage.removeItem("balls");
 
     document.getElementById("seesawPlank").style.transform = `translateX(-50%) translateY(-50%) rotate(0deg)`;
-    
-    state.nextWeight = randomInt(1, 10);
 
     updateDisplay();
+
+    resetSound.play();
 
 });
 
@@ -232,7 +249,7 @@ function updatePlankAngle() {
     }
 
     seesaw.style.transform = `translateX(-50%) translateY(-50%) rotate(${state.oldAngle}deg)`;
-    document.getElementById("angle").innerHTML = `${state.oldAngle.toFixed(1)}°`;
+    document.getElementById("angle").textContent = `${state.oldAngle.toFixed(1)}°`;
 }
 
 function updateBalls() {
@@ -250,6 +267,7 @@ function updateBalls() {
                 ball.style.top = top + 4 + "px";
             } 
             else {
+                placedSound.play();
                 placeBallOnPlank(ball);
                 ball.dataset.falling = "false";
 

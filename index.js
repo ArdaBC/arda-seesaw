@@ -36,30 +36,9 @@ document.addEventListener("DOMContentLoaded", () => {
     currentId = savedState.currentId || 0;
     nextWeight = savedState.nextWeight || randomInt(1, 10);
 
-    document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
-    document.getElementById("rightWeight").innerHTML = `${rightWeight} kg`;
-    document.getElementById("leftWeight").innerHTML = `${leftWeight} kg`;
-    document.getElementById("angle").innerHTML = `${oldAngle.toFixed(1)}°`;
+    updateDisplay();
 
-    const savedBalls = JSON.parse(localStorage.getItem("balls") || "[]");
-
-    savedBalls.forEach(ballData => {
-
-        const ball = document.createElement("div");
-        ball.className = "object";
-        ball.id = `object-${ballData.id}`;
-        ball.style.width = `${ballData.size}px`;
-        ball.style.height = `${ballData.size}px`;
-        ball.style.background = ballData.color;
-        ball.style.position = "absolute";
-        ball.style.left = `${ballData.x - ballData.size/2}px`;
-        ball.style.top = `${ballData.top}px`;
-        ball.textContent = `${ballData.weight}kg`;
-
-        ball.dataset.falling = ballData.falling ? "true" : "false";
-
-        container.append(ball);
-    });
+    savedBalls.forEach(ballData => renderBall(ballData));
 
     requestAnimationFrame(mainLoop);
 });
@@ -82,7 +61,7 @@ function getPlankHeight(x) {
     return plankHeight;
 }
 
-//Check if the ball collides with the plank
+//plank ile ball çarpışıyor mu
 function collides(ball) {
     const rect1 = ball.getBoundingClientRect();
     const rectCenterX = rect1.left + rect1.width / 2;
@@ -107,25 +86,16 @@ function placeBallOnPlank(ball) {
     ball.style.top = `${ballTop}px`;
 }
 
+function updateDisplay() {
+    document.getElementById("rightWeight").innerHTML = `${rightWeight} kg`;
+    document.getElementById("leftWeight").innerHTML = `${leftWeight} kg`;
+    document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
+    document.getElementById("angle").innerHTML = `${oldAngle.toFixed(1)}°`;
+}
+
 function createWeight(weight, x) {
-
     const size = 30 + 4 * weight;
-    const color = colors[Math.floor(Math.random() * colors.length)]
-
-    const ball = document.createElement("div");
-    ball.className = "object";
-    ball.id = `object-${currentId}`;
-    ball.style.width = `${size}px`; 
-    ball.style.height = `${size}px`; 
-    ball.style.background = `${color}`;
-    ball.style.position = "absolute";
-    ball.style.left = `${x - size/2}px`;
-    ball.style.top = "0px";
-    ball.textContent = `${weight}kg`;
-
-    ball.dataset.falling = "true"; //bu olmadan yapamadım
-
-    container.append(ball);
+    const color = colors[Math.floor(Math.random() * colors.length)];
 
     const storedBall = {
         id: currentId,
@@ -137,13 +107,37 @@ function createWeight(weight, x) {
         falling: true
     };
 
+    renderBall(storedBall);
+
     let savedBalls = JSON.parse(localStorage.getItem("balls") || "[]");
     savedBalls.push(storedBall);
     localStorage.setItem("balls", JSON.stringify(savedBalls));
 
     currentId++;
-
 }
+
+
+function renderBall({id, size, color, weight, x, top, falling}) {
+
+    const ball = document.createElement("div");
+
+    ball.className = "object";
+    ball.id = `object-${id}`;
+    ball.style.width = `${size}px`;
+    ball.style.height = `${size}px`;
+    ball.style.background = color;
+    ball.style.position = "absolute";
+    ball.style.left = `${x - size / 2}px`;
+    ball.style.top = `${top}px`;
+    ball.textContent = `${weight}kg`;
+
+    ball.dataset.falling = falling ? "true" : "false";
+
+    container.append(ball);
+
+    return ball;
+}
+
 
 document.getElementById('seesawClickable')
 .addEventListener('click', function (event) {
@@ -154,8 +148,6 @@ document.getElementById('seesawClickable')
     const randWeight = nextWeight;
     nextWeight = randomInt(1, 10);
 
-    document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
-
     const distance = x-225; //225 tam orta, pdf'te yazıyor
 
     const currentTorque = randWeight * distance;
@@ -165,14 +157,12 @@ document.getElementById('seesawClickable')
     if(currentTorque > 0){
 
         rightWeight += randWeight;
-        document.getElementById("rightWeight").innerHTML = `${rightWeight} kg`;
         rightTorque += currentTorque;
         side = "right";
     }
     else{
 
         leftWeight += randWeight;
-        document.getElementById("leftWeight").innerHTML = `${leftWeight} kg`;
         leftTorque -= currentTorque;
         side = "left";
 
@@ -185,6 +175,8 @@ document.getElementById('seesawClickable')
     const log = document.createElement("div");
     log.className = "log-entry";
     log.innerHTML = `📦 ${randWeight} kg dropped on ${side} side at ${finalDist} px from center`;
+
+    updateDisplay();
 
     logger.append(log);
 
@@ -231,12 +223,10 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     localStorage.clear();
 
     document.getElementById("seesawPlank").style.transform = `translateX(-50%) translateY(-50%) rotate(0deg)`;
-    document.getElementById("angle").innerHTML = `0.0°`;
-    document.getElementById("rightWeight").innerHTML = `0 kg`;
-    document.getElementById("leftWeight").innerHTML = `0 kg`;
     
     nextWeight = randomInt(1, 10);
-    document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
+
+    updateDisplay();
 
 });
 

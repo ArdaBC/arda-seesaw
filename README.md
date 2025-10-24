@@ -1,16 +1,15 @@
 Features to implement:
 
-Ball width and height proportional to weight
+Ball preview
 
-Random ball color
+local state
 
+Cleaner code in general + possible optimizations
 
 Current Bugs:
 
-Sometimes, adding countertorque makes the seesaw move slightly in the other direction (probably an animation bug where the step is too slow, probably related to my /60 formula)
-
-Seesaw moves before the weight touches the plank
-
-After 20 balls, it gets really laggy
+Seesaw moves before the weight touches the plank (also exists in the example)
 
 Sometimes, balls fall off to the side
+
+Ball collision logic with plank is a little too snappy

@@ -7,6 +7,9 @@ let nextWeight = 0;
 let oldAngle = 0;
 let angle = 0;
 
+//çok kullanılıyor diye global yaptım
+const container = document.getElementById("seesawClickable"); 
+
 const colors = [
   "rgb(230, 126, 34)",
   "rgb(155, 89, 182)",
@@ -21,6 +24,7 @@ const colors = [
 document.addEventListener("DOMContentLoaded", () => {
     nextWeight = randomInt(1, 10);
     document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
+    requestAnimationFrame(mainLoop);
 });
 
 function randomInt(min, max) {
@@ -32,7 +36,7 @@ function getPlankHeight(x) {
     const pivotRect = pivot.getBoundingClientRect();
 
     const pivotX = pivotRect.left + pivotRect.width / 2;
-    const pivotY = pivotRect.top + pivotRect.height / 2;
+    const pivotY = pivotRect.top + pivotRect.height / 2; //rotation pivotun ortasına göre (görsel != logic)
 
     const theta = oldAngle * Math.PI / 180;
     
@@ -41,6 +45,7 @@ function getPlankHeight(x) {
     return plankHeight;
 }
 
+//Check if the ball collides with the plank
 function collides(ball) {
     const rect1 = ball.getBoundingClientRect();
     const rectCenterX = rect1.left + rect1.width / 2;
@@ -51,7 +56,7 @@ function collides(ball) {
 }
 
 function placeBallOnPlank(ball) {
-    const container = document.getElementById("seesawClickable");
+    
     const containerRect = container.getBoundingClientRect();
 
     const rect1 = ball.getBoundingClientRect();
@@ -65,12 +70,10 @@ function placeBallOnPlank(ball) {
     ball.style.top = `${ballTop}px`;
 }
 
-function weightAnimation(weight, x, y){
+function createWeight(weight, x) {
 
     const size = 30 + 4 * weight;
     const color = colors[Math.floor(Math.random() * colors.length)]
-
-    const container = document.getElementById("seesawClickable");
 
     const ball = document.createElement("div");
     ball.className = "object";
@@ -86,100 +89,20 @@ function weightAnimation(weight, x, y){
 
     container.append(ball);
 
-    function animate() {
-
-        const top = parseFloat(ball.style.top);
-
-        if(ball.dataset.falling !== "false"){
-
-            if(!collides(ball)){
-                ball.style.top = top + 4 + "px";
-                requestAnimationFrame(animate);
-            } 
-            else{
-                placeBallOnPlank(ball);
-                ball.dataset.falling = "false";
-                ballsOnPlankAnimation();
-                return;
-            }
-        } 
-        else{
-            placeBallOnPlank(ball);
-            return;
-        }
-    }
-
-  requestAnimationFrame(animate);
 }
 
-function plankAnimation(){
-
-    angle = Math.max(-30, Math.min(30, (rightTorque - leftTorque) / 10));
-
-    function animate() {
-        if(Math.abs(oldAngle - angle) < 0.01){
-            oldAngle = angle;
-            document.getElementById("seesawPlank").style.transform = `translateX(-50%) translateY(-50%) rotate(${oldAngle}deg)`;
-            return;
-        }
-
-        if(oldAngle > angle){
-            oldAngle -= (oldAngle - angle)/30;
-        }
-        else{
-            oldAngle += (angle - oldAngle)/30;
-        }
-
-        document.getElementById("seesawPlank").style.transform = `translateX(-50%) translateY(-50%) rotate(${oldAngle}deg)`;
-        document.getElementById("angle").innerHTML = `${oldAngle.toFixed(1)}°`;
-
-        requestAnimationFrame(animate);
-    }
-
-    requestAnimationFrame(animate);
-}
-
-function ballsOnPlankAnimation(){
-
-    function animate(){
-
-        const balls = Array.from(document.querySelectorAll(".object"));
-
-        if(balls.length === 0){
-            return;
-        }
-
-        balls.forEach(ball => {
-            if(ball.dataset.falling === "false"){
-                placeBallOnPlank(ball);
-            } 
-            else{
-                if(collides(ball)){
-                    placeBallOnPlank(ball);
-                    ball.dataset.falling = "false";
-                }
-            }
-        });
-
-        requestAnimationFrame(animate);
-    }
-
-    requestAnimationFrame(animate);
-}
-
-document.getElementsByClassName('seesaw-clickable')[0]
+document.getElementById('seesawClickable')
 .addEventListener('click', function (event) {
 
     const rect = this.getBoundingClientRect();
     const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
 
     const randWeight = nextWeight;
     nextWeight = randomInt(1, 10);
 
     document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
 
-    const distance = x-225;
+    const distance = x-225; //225 tam orta, pdf'te yazıyor
 
     const currentTorque = randWeight * distance;
 
@@ -213,20 +136,16 @@ document.getElementsByClassName('seesaw-clickable')[0]
 
     torque += currentTorque;
 
-    weightAnimation(randWeight, x, y);
+    angle = Math.max(-30, Math.min(30, (rightTorque - leftTorque) / 10));
 
-    plankAnimation();
-
-    ballsOnPlankAnimation();
+    createWeight(randWeight, x);
 
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
 
-    const parent = document.getElementById('seesawClickable');
-
-    while(parent.firstChild){
-        parent.removeChild(parent.firstChild);
+    while(container.firstChild){
+        container.removeChild(container.firstChild);
     }
 
     const logger = document.getElementById("log");
@@ -252,3 +171,46 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
 
 });
+
+function updatePlankAngle() {
+    const seesaw = document.getElementById("seesawPlank");
+
+    const diff = angle - oldAngle;
+    if(Math.abs(diff) > 0.001){
+        oldAngle += diff / 20;
+    }
+
+    seesaw.style.transform = `translateX(-50%) translateY(-50%) rotate(${oldAngle}deg)`;
+    document.getElementById("angle").innerHTML = `${oldAngle.toFixed(1)}°`;
+}
+
+function updateBalls() {
+    
+    const balls = Array.from(document.querySelectorAll(".object"));
+
+    if (balls.length === 0){
+        return;
+    }
+
+    balls.forEach(ball => {
+        if (ball.dataset.falling === "true") {
+            const top = parseFloat(ball.style.top);
+            if (!collides(ball)) {
+                ball.style.top = top + 4 + "px";
+            } 
+            else {
+                placeBallOnPlank(ball);
+                ball.dataset.falling = "false";
+            }
+        } 
+        else {
+            placeBallOnPlank(ball);
+        }
+    });
+}
+
+function mainLoop() {
+    updatePlankAngle();
+    updateBalls();
+    requestAnimationFrame(mainLoop);
+}

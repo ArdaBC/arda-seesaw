@@ -6,6 +6,7 @@ let leftWeight = 0;
 let nextWeight = 0;
 let oldAngle = 0;
 let angle = 0;
+let currentId = 0;
 
 //çok kullanılıyor diye global yaptım
 const container = document.getElementById("seesawClickable"); 
@@ -22,8 +23,44 @@ const colors = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
-    nextWeight = randomInt(1, 10);
+
+    const savedState = JSON.parse(localStorage.getItem("state") || "{}");
+
+    torque = savedState.torque || 0;
+    rightTorque = savedState.rightTorque || 0;
+    leftTorque = savedState.leftTorque || 0;
+    rightWeight = savedState.rightWeight || 0;
+    leftWeight = savedState.leftWeight || 0;
+    oldAngle = savedState.oldAngle || 0;
+    angle = savedState.angle || 0;
+    currentId = savedState.currentId || 0;
+    nextWeight = savedState.nextWeight || randomInt(1, 10);
+
     document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
+    document.getElementById("rightWeight").innerHTML = `${rightWeight} kg`;
+    document.getElementById("leftWeight").innerHTML = `${leftWeight} kg`;
+    document.getElementById("angle").innerHTML = `${oldAngle.toFixed(1)}°`;
+
+    const savedBalls = JSON.parse(localStorage.getItem("balls") || "[]");
+
+    savedBalls.forEach(ballData => {
+
+        const ball = document.createElement("div");
+        ball.className = "object";
+        ball.id = `object-${ballData.id}`;
+        ball.style.width = `${ballData.size}px`;
+        ball.style.height = `${ballData.size}px`;
+        ball.style.background = ballData.color;
+        ball.style.position = "absolute";
+        ball.style.left = `${ballData.x - ballData.size/2}px`;
+        ball.style.top = `${ballData.top}px`;
+        ball.textContent = `${ballData.weight}kg`;
+
+        ball.dataset.falling = ballData.falling ? "true" : "false";
+
+        container.append(ball);
+    });
+
     requestAnimationFrame(mainLoop);
 });
 
@@ -77,6 +114,7 @@ function createWeight(weight, x) {
 
     const ball = document.createElement("div");
     ball.className = "object";
+    ball.id = `object-${currentId}`;
     ball.style.width = `${size}px`; 
     ball.style.height = `${size}px`; 
     ball.style.background = `${color}`;
@@ -88,6 +126,22 @@ function createWeight(weight, x) {
     ball.dataset.falling = "true"; //bu olmadan yapamadım
 
     container.append(ball);
+
+    const storedBall = {
+        id: currentId,
+        size,
+        color,
+        weight,
+        x,
+        top: 0,
+        falling: true
+    };
+
+    let savedBalls = JSON.parse(localStorage.getItem("balls") || "[]");
+    savedBalls.push(storedBall);
+    localStorage.setItem("balls", JSON.stringify(savedBalls));
+
+    currentId++;
 
 }
 
@@ -140,6 +194,18 @@ document.getElementById('seesawClickable')
 
     createWeight(randWeight, x);
 
+    localStorage.setItem("state", JSON.stringify({
+        torque,
+        rightTorque,
+        leftTorque,
+        rightWeight,
+        leftWeight,
+        nextWeight,
+        oldAngle,
+        angle,
+        currentId
+    }));
+
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
@@ -161,6 +227,8 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     leftWeight = 0;
     oldAngle = 0;
     angle = 0;
+
+    localStorage.clear();
 
     document.getElementById("seesawPlank").style.transform = `translateX(-50%) translateY(-50%) rotate(0deg)`;
     document.getElementById("angle").innerHTML = `0.0°`;
@@ -201,6 +269,19 @@ function updateBalls() {
             else {
                 placeBallOnPlank(ball);
                 ball.dataset.falling = "false";
+
+                let savedBalls = JSON.parse(localStorage.getItem("balls") || "[]");
+
+                const index = savedBalls.findIndex(function (element) {
+                    return Number(element.id) === parseInt(ball.id.split("-")[1]);
+                });
+
+                if(index !== -1){
+                    savedBalls[index].top = parseFloat(ball.style.top);
+                    savedBalls[index].falling = false;
+                    localStorage.setItem("balls", JSON.stringify(savedBalls));
+                }
+
             }
         } 
         else {

@@ -14,21 +14,13 @@ let placedSound = new Sound("land.ogg");
 let resetSound = new Sound("reset.ogg");
 
 function Sound(src) {
-
-  this.sound = document.createElement("audio");
-  this.sound.src = src;
-  this.sound.setAttribute("preload", "auto");
-  this.sound.setAttribute("controls", "none");
-  this.sound.style.display = "none";
-  this.sound.volume = 0.5
-
-  document.body.appendChild(this.sound);
-
-  this.play = function(){
-    const clone = this.sound.cloneNode();
-    clone.play();
-  }
-
+    this.sound = new Audio(src);
+    this.sound.preload = "auto";
+    this.sound.volume = 0.5;
+    this.play = function() {
+        const clone = this.sound.cloneNode();
+        clone.play();
+    }
 }
 
 //çok kullanılıyor diye global yaptım

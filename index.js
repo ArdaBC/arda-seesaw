@@ -1,12 +1,14 @@
-let torque = 0;
-let rightTorque = 0;
-let leftTorque = 0;
-let rightWeight = 0;
-let leftWeight = 0;
-let nextWeight = 0;
-let oldAngle = 0;
-let angle = 0;
-let currentId = 0;
+let state = {
+    torque: 0,
+    rightTorque: 0,
+    leftTorque: 0,
+    rightWeight: 0,
+    leftWeight: 0,
+    nextWeight: 0,
+    oldAngle: 0,
+    angle: 0,
+    currentId: 0
+};
 
 //çok kullanılıyor diye global yaptım
 const container = document.getElementById("seesawClickable"); 
@@ -26,18 +28,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const savedState = JSON.parse(localStorage.getItem("state") || "{}");
 
-    torque = savedState.torque || 0;
-    rightTorque = savedState.rightTorque || 0;
-    leftTorque = savedState.leftTorque || 0;
-    rightWeight = savedState.rightWeight || 0;
-    leftWeight = savedState.leftWeight || 0;
-    oldAngle = savedState.oldAngle || 0;
-    angle = savedState.angle || 0;
-    currentId = savedState.currentId || 0;
-    nextWeight = savedState.nextWeight || randomInt(1, 10);
+    Object.assign(state, savedState);
+
+    if (!state.nextWeight) {
+        state.nextWeight = randomInt(1, 10);
+    }
 
     updateDisplay();
 
+    const savedBalls = JSON.parse(localStorage.getItem("balls") || "[]");
     savedBalls.forEach(ballData => renderBall(ballData));
 
     requestAnimationFrame(mainLoop);
@@ -54,7 +53,7 @@ function getPlankHeight(x) {
     const pivotX = pivotRect.left + pivotRect.width / 2;
     const pivotY = pivotRect.top + pivotRect.height / 2; //rotation pivotun ortasına göre (görsel != logic)
 
-    const theta = oldAngle * Math.PI / 180;
+    const theta = state.oldAngle * Math.PI / 180;
     
     const plankHeight = pivotY + (x - pivotX) * Math.tan(theta);
 
@@ -87,10 +86,10 @@ function placeBallOnPlank(ball) {
 }
 
 function updateDisplay() {
-    document.getElementById("rightWeight").innerHTML = `${rightWeight} kg`;
-    document.getElementById("leftWeight").innerHTML = `${leftWeight} kg`;
-    document.getElementById("nextWeight").innerHTML = `${nextWeight} kg`;
-    document.getElementById("angle").innerHTML = `${oldAngle.toFixed(1)}°`;
+    document.getElementById("rightWeight").innerHTML = `${state.rightWeight} kg`;
+    document.getElementById("leftWeight").innerHTML = `${state.leftWeight} kg`;
+    document.getElementById("nextWeight").innerHTML = `${state.nextWeight} kg`;
+    document.getElementById("angle").innerHTML = `${state.oldAngle.toFixed(1)}°`;
 }
 
 function createWeight(weight, x) {
@@ -98,7 +97,7 @@ function createWeight(weight, x) {
     const color = colors[Math.floor(Math.random() * colors.length)];
 
     const storedBall = {
-        id: currentId,
+        id: state.currentId,
         size,
         color,
         weight,
@@ -113,7 +112,7 @@ function createWeight(weight, x) {
     savedBalls.push(storedBall);
     localStorage.setItem("balls", JSON.stringify(savedBalls));
 
-    currentId++;
+    state.currentId++;
 }
 
 
@@ -145,8 +144,8 @@ document.getElementById('seesawClickable')
     const rect = this.getBoundingClientRect();
     const x = event.clientX - rect.left;
 
-    const randWeight = nextWeight;
-    nextWeight = randomInt(1, 10);
+    const randWeight = state.nextWeight;
+    state.nextWeight = randomInt(1, 10);
 
     const distance = x-225; //225 tam orta, pdf'te yazıyor
 
@@ -156,14 +155,14 @@ document.getElementById('seesawClickable')
 
     if(currentTorque > 0){
 
-        rightWeight += randWeight;
-        rightTorque += currentTorque;
+        state.rightWeight += randWeight;
+        state.rightTorque += currentTorque;
         side = "right";
     }
     else{
 
-        leftWeight += randWeight;
-        leftTorque -= currentTorque;
+        state.leftWeight += randWeight;
+        state.leftTorque -= currentTorque;
         side = "left";
 
     }
@@ -180,23 +179,13 @@ document.getElementById('seesawClickable')
 
     logger.append(log);
 
-    torque += currentTorque;
+    state.torque += currentTorque;
 
-    angle = Math.max(-30, Math.min(30, (rightTorque - leftTorque) / 10));
+    state.angle = Math.max(-30, Math.min(30, (state.rightTorque - state.leftTorque) / 10));
 
     createWeight(randWeight, x);
 
-    localStorage.setItem("state", JSON.stringify({
-        torque,
-        rightTorque,
-        leftTorque,
-        rightWeight,
-        leftWeight,
-        nextWeight,
-        oldAngle,
-        angle,
-        currentId
-    }));
+    localStorage.setItem("state", JSON.stringify({ ...state }));
 
 });
 
@@ -212,19 +201,23 @@ document.getElementById('resetBtn').addEventListener('click', () => {
         logger.removeChild(logger.firstChild);
     }
 
-    torque = 0;
-    rightTorque = 0;
-    leftTorque = 0;
-    rightWeight = 0;
-    leftWeight = 0;
-    oldAngle = 0;
-    angle = 0;
+    state = {
+        torque: 0,
+        rightTorque: 0,
+        leftTorque: 0,
+        rightWeight: 0,
+        leftWeight: 0,
+        oldAngle: 0,
+        angle: 0,
+        currentId: 0,
+        nextWeight: randomInt(1, 10)
+    };
 
     localStorage.clear();
 
     document.getElementById("seesawPlank").style.transform = `translateX(-50%) translateY(-50%) rotate(0deg)`;
     
-    nextWeight = randomInt(1, 10);
+    state.nextWeight = randomInt(1, 10);
 
     updateDisplay();
 
@@ -233,13 +226,13 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 function updatePlankAngle() {
     const seesaw = document.getElementById("seesawPlank");
 
-    const diff = angle - oldAngle;
+    const diff = state.angle - state.oldAngle;
     if(Math.abs(diff) > 0.001){
-        oldAngle += diff / 20;
+        state.oldAngle += diff / 20;
     }
 
-    seesaw.style.transform = `translateX(-50%) translateY(-50%) rotate(${oldAngle}deg)`;
-    document.getElementById("angle").innerHTML = `${oldAngle.toFixed(1)}°`;
+    seesaw.style.transform = `translateX(-50%) translateY(-50%) rotate(${state.oldAngle}deg)`;
+    document.getElementById("angle").innerHTML = `${state.oldAngle.toFixed(1)}°`;
 }
 
 function updateBalls() {

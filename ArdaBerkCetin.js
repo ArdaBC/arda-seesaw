@@ -146,8 +146,6 @@ function renderBall({id, size, color, weight, x, top, falling}) {
     ball.dataset.falling = falling ? "true" : "false";
 
     container.append(ball);
-
-    return ball;
 }
 
 
@@ -160,7 +158,12 @@ document.getElementById('seesawClickable')
     const randWeight = state.nextWeight;
     state.nextWeight = randomInt(1, 10);
 
-    const distance = x-225; //225 tam orta, pdf'te yazıyor
+    const containerRect = container.getBoundingClientRect();
+    const clickable = document.getElementById("seesawClickable");
+    const clickableRect = clickable.getBoundingClientRect();
+    const plankCenter = (clickableRect.left + clickableRect.width / 2) - containerRect.left;
+
+    const distance = x - plankCenter;
 
     const currentTorque = randWeight * distance;
 
@@ -190,7 +193,7 @@ document.getElementById('seesawClickable')
 
     updateDisplay();
 
-    logger.append(log);
+    logger.prepend(log);
 
     state.torque += currentTorque;
 

@@ -52,7 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedBalls = JSON.parse(localStorage.getItem("balls") || "[]");
     savedBalls.forEach(ballData => renderBall(ballData));
 
-    requestAnimationFrame(mainLoop);
+    updatePlankAngle();
+    updateBalls();
 });
 
 function randomInt(min, max) {
@@ -165,22 +166,13 @@ document.getElementById('seesawClickable')
 
     const distance = x - plankCenter;
 
-    const currentTorque = randWeight * distance;
-
     let side = "";
 
-    if(currentTorque > 0){
-
-        state.rightWeight += randWeight;
-        state.rightTorque += currentTorque;
+    if(distance > 0){
         side = "right";
     }
     else{
-
-        state.leftWeight += randWeight;
-        state.leftTorque -= currentTorque;
         side = "left";
-
     }
 
     let finalDist = Math.round(Math.abs(distance));
@@ -194,10 +186,6 @@ document.getElementById('seesawClickable')
     updateDisplay();
 
     logger.prepend(log);
-
-    state.torque += currentTorque;
-
-    state.angle = Math.max(-30, Math.min(30, (state.rightTorque - state.leftTorque) / 10));
 
     createWeight(randWeight, x);
 
@@ -245,15 +233,12 @@ function updatePlankAngle() {
 
     seesaw.style.transform = `translateX(-50%) translateY(-50%) rotate(${state.oldAngle}deg)`;
     document.getElementById("angle").textContent = `${state.oldAngle.toFixed(1)}°`;
+    requestAnimationFrame(updatePlankAngle);
 }
 
 function updateBalls() {
     
     const balls = Array.from(document.querySelectorAll(".object"));
-
-    if (balls.length === 0){
-        return;
-    }
 
     balls.forEach(ball => {
         if (ball.dataset.falling === "true") {
@@ -273,6 +258,34 @@ function updateBalls() {
                 });
 
                 if(index !== -1){
+                    if (savedBalls[index].falling) {
+                        const weight = savedBalls[index].weight;
+                        const x = savedBalls[index].x;
+
+                        //direkt aynı kod, sadece buraya taşındı
+                        const containerRect = container.getBoundingClientRect();
+                        const clickable = document.getElementById("seesawClickable");
+                        const clickableRect = clickable.getBoundingClientRect();
+                        const plankCenter = (clickableRect.left + clickableRect.width / 2) - containerRect.left;
+                        const distance = x - plankCenter;
+                        const currentTorque = weight * distance;
+
+                        if (currentTorque > 0) {
+                            state.rightWeight += weight;
+                            state.rightTorque += currentTorque;
+                        } 
+                        else {
+                            state.leftWeight += weight;
+                            state.leftTorque -= currentTorque;
+                        }
+
+                        state.torque += currentTorque;
+                        state.angle = Math.max(-30, Math.min(30, (state.rightTorque - state.leftTorque) / 10));
+
+                        updateDisplay();
+
+                        localStorage.setItem("state", JSON.stringify({ ...state }));
+                    }
                     savedBalls[index].top = parseFloat(ball.style.top);
                     savedBalls[index].falling = false;
                     localStorage.setItem("balls", JSON.stringify(savedBalls));
@@ -284,10 +297,6 @@ function updateBalls() {
             placeBallOnPlank(ball);
         }
     });
-}
 
-function mainLoop() {
-    updatePlankAngle();
-    updateBalls();
-    requestAnimationFrame(mainLoop);
+    requestAnimationFrame(updateBalls);
 }
